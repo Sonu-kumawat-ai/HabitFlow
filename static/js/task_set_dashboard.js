@@ -54,7 +54,7 @@ async function loadDashboard() {
 
     <div class="section-card">
       <h3><i class="fas fa-chart-pie"></i> 3. Overall Progress</h3>
-      <div class="section-note">Overall Completion: <span class="chip ${pctChipClass(d.overall_pct)}">${d.overall_pct}%</span></div>
+      <div class="section-note section-note-chips">Overall Completion: <span class="chip ${pctChipClass(d.overall_pct)}">${d.overall_pct}%</span></div>
       <div style="overflow-x:auto;">
         <table class="task-stats-table">
           <thead>
@@ -74,9 +74,9 @@ async function loadDashboard() {
               const progressPct = s.progress_pct_schedule || 0;
               const breakdownText = `${donePct}% + ${missedPct}% = ${progressPct}%`;
               return `
-                <tr>
-                  <td><strong>${task}</strong></td>
-                  <td>
+                <tr class="mobile-stat-row">
+                  <td data-label="Task"><strong>${task}</strong></td>
+                  <td data-label="Individual Completion %" class="completion-cell">
                     <div style="display:flex;align-items:center;gap:10px;">
                       <div class="task-progress-bar">
                         <div class="task-progress-fill done" style="width:${donePct}%"></div>
@@ -85,9 +85,9 @@ async function loadDashboard() {
                       <span>${breakdownText}</span>
                     </div>
                   </td>
-                  <td>${s.current_streak || 0} 🔥</td>
-                  <td>${s.max_streak || 0} ⭐</td>
-                  <td>${s.max_missed_streak || 0}</td>
+                  <td data-label="Current Strike">${s.current_streak || 0} 🔥</td>
+                  <td data-label="Best Strike">${s.max_streak || 0} ⭐</td>
+                  <td data-label="Longest Missed Streak">${s.max_missed_streak || 0}</td>
                 </tr>
               `;
             }).join('')}
