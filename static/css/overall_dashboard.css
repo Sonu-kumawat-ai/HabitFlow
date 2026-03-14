@@ -1,0 +1,228 @@
+.dash-header { margin-bottom: 22px; }
+.dash-header h2 { font-size: 1.8rem; color: var(--brown-600); }
+.dash-header p { color: var(--text-muted); margin-top: 4px; }
+
+.section-card {
+  background: var(--cream);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border);
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 10px var(--shadow);
+}
+
+.section-card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  color: var(--brown-600);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metric-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  gap: 12px;
+}
+
+.metric-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.metric-label {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.metric-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.7rem;
+  color: var(--brown-500);
+  line-height: 1.1;
+  margin-top: 6px;
+}
+
+.metric-sub {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.section-note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.chip-good { background: #e8f5e9; color: #2e7d32; }
+.chip-warn { background: #fff3e0; color: #e65100; }
+.chip-bad { background: #ffebee; color: #c62828; }
+
+.insight-box {
+  background: #fffaf0;
+  border: 1px dashed #d7bb91;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.insight-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.insight-value {
+  margin-top: 6px;
+  font-size: 1rem;
+  color: var(--brown-600);
+  font-weight: 700;
+}
+
+.task-stats-table { width: 100%; border-collapse: collapse; }
+.task-stats-table th {
+  text-align: left;
+  font-size: 0.73rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--border);
+}
+
+.task-stats-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--cream-dark);
+  font-size: 0.86rem;
+}
+
+.task-progress-bar {
+  width: 120px;
+  height: 8px;
+  display: flex;
+  border-radius: 8px;
+  background: #eadbc2;
+  overflow: hidden;
+}
+
+.task-progress-fill {
+  height: 100%;
+  flex: 0 0 auto;
+}
+
+.task-progress-fill.done {
+  background: linear-gradient(90deg, #43a047, #66bb6a);
+}
+
+.task-progress-fill.missed {
+  background: linear-gradient(90deg, #d84315, #ef5350);
+}
+
+.chart-wrap { height: 240px; }
+
+.task-sets-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.ts-card {
+  background: var(--cream);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border);
+  overflow: hidden;
+  transition: all 0.25s;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.ts-card:hover {
+  border-color: var(--brown-300);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px var(--shadow);
+}
+
+.ts-card-top { height: 5px; background: linear-gradient(90deg, var(--brown-300), var(--brown-200)); }
+.ts-card-body { padding: 18px; }
+.ts-card-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--brown-600); margin-bottom: 12px; }
+.ts-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.ts-stat { text-align: center; padding: 8px 4px; background: var(--cream); border-radius: var(--radius); }
+.ts-stat-val { font-weight: 700; font-size: 1.1rem; color: var(--brown-500); }
+.ts-stat-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+.progress-bar-wrap { height: 6px; background: var(--cream-dark); border-radius: 3px; overflow: hidden; margin-top: 10px; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--brown-300), var(--brown-200)); border-radius: 3px; }
+
+.heatmap-container { overflow-x: auto; }
+.heatmap-weeks { display: flex; gap: 3px; }
+.heatmap-col { display: flex; flex-direction: column; gap: 3px; }
+.heatmap-day { width: 13px; height: 13px; border-radius: 2px; background: #eee; cursor: pointer; }
+.heatmap-day[data-level="0"] { background: #f0d9b5; }
+.heatmap-day[data-level="1"] { background: #d4a96a; }
+.heatmap-day[data-level="2"] { background: #c4863a; }
+.heatmap-day[data-level="3"] { background: #a0652a; }
+.heatmap-day[data-level="4"] { background: #5c3810; }
+.heatmap-labels { display: flex; gap: 3px; margin-bottom: 4px; padding-left: 28px; }
+.heatmap-month-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; }
+.heatmap-side-labels { display: flex; flex-direction: column; gap: 3px; margin-right: 4px; }
+.heatmap-day-label { font-size: 0.65rem; color: var(--text-muted); height: 13px; display: flex; align-items: center; }
+.heatmap-legend { display: flex; align-items: center; gap: 4px; margin-top: 10px; font-size: 0.75rem; color: var(--text-muted); }
+.heatmap-legend-sq { width: 11px; height: 11px; border-radius: 2px; }
+
+.tooltip {
+  position: fixed;
+  background: var(--brown-700);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  pointer-events: none;
+  z-index: 9999;
+  display: none;
+  white-space: nowrap;
+}
+
+.empty-dash {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.empty-dash i { font-size: 3rem; color: var(--brown-200); margin-bottom: 12px; }
+.empty-dash h3 { font-size: 1.2rem; color: var(--text-secondary); }
+
+@media (max-width: 820px) {
+  .two-col { grid-template-columns: 1fr; }
+  .chart-wrap { height: 220px; }
+  .task-sets-list { grid-template-columns: 1fr; }
+}

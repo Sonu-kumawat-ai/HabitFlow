@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}HabitFlow – Overall Dashboard{% endblock %}
+
+{% block navbar_actions %}
+<button onclick="history.back()" class="btn btn-ghost btn-sm" title="Go back">
+  <i class="fas fa-arrow-left"></i> Back
+</button>
+<a href="{{ url_for('tasks.home') }}" class="btn btn-ghost btn-sm">
+  <i class="fas fa-home"></i> Home
+</a>
+<a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-sm">
+  <i class="fas fa-sign-out-alt"></i> Logout
+</a>
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/overall_dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="dash-header">
+    <h2>📊 Overall Dashboard</h2>
+    <p>Your habit tracking overview across all task sets</p>
+  </div>
+
+  <div id="dashContent">
+    <div style="text-align:center;padding:40px;color:var(--text-muted);">
+      <i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i>
+      <p style="margin-top:12px;">Loading your stats...</p>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/overall_dashboard.js') }}"></script>
+{% endblock %}

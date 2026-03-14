@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}HabitFlow{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body {% block body_attrs %}{% endblock %}>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <nav class="navbar">
+    <a href="{{ url_for('tasks.home') }}" class="navbar-brand">Habit<span>Flow</span></a>
+    <div class="navbar-actions">
+      {% block navbar_actions %}
+      <a href="{{ url_for('dashboard.overall_dashboard') }}" class="btn btn-ghost btn-sm">
+        <i class="fas fa-chart-bar"></i> Dashboard
+      </a>
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-sm">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
+      {% endblock %}
+    </div>
+  </nav>
+
+  {% block content %}{% endblock %}
+
+  <script src="{{ url_for('static', filename='js/base.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

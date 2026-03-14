@@ -1,0 +1,309 @@
+:root {
+  --cream: #fdf6ed;
+  --cream-dark: #f5e8d3;
+  --brown-50: #faf0e0;
+  --brown-100: #f0d9b5;
+  --brown-200: #d4a96a;
+  --brown-300: #c4863a;
+  --brown-400: #a0652a;
+  --brown-500: #7d4f1f;
+  --brown-600: #5c3810;
+  --brown-700: #3e2509;
+  --text-primary: #2d1f0e;
+  --text-secondary: #6b4f2e;
+  --text-muted: #9c7a56;
+  --border: #e0c9a6;
+  --shadow: rgba(90, 55, 20, 0.12);
+  --shadow-lg: rgba(90, 55, 20, 0.2);
+  --success: #4caf50;
+  --partial: #ff9800;
+  --incomplete: #ef5350;
+  --white: #ffffff;
+  --radius: 12px;
+  --radius-lg: 20px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--brown-100);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+h1, h2, h3 { font-family: 'Playfair Display', serif; }
+
+.navbar {
+  background: var(--brown-400);
+  color: white;
+  padding: 0 24px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 12px var(--shadow-lg);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--brown-100);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+}
+
+.navbar-brand span { color: var(--brown-200); }
+
+.navbar-actions { display: flex; gap: 8px; align-items: center; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--brown-300);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--brown-400);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.btn-secondary {
+  background: var(--cream-dark);
+  color: var(--brown-500);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover { background: var(--brown-100); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--brown-100);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.btn-ghost:hover { background: rgba(255,255,255,0.15); }
+
+.btn-ghost:first-child {
+  border-color: rgba(255,255,255,0.5);
+  font-weight: 600;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover { background: #c82333; }
+
+.btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+.btn-lg { padding: 12px 28px; font-size: 1rem; }
+
+.card {
+  background: var(--cream);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 16px var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.toast-container {
+  position: fixed;
+  top: 72px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  background: var(--brown-600);
+  color: white;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px var(--shadow-lg);
+  font-size: 0.875rem;
+  animation: slideIn 0.3s ease;
+  max-width: 320px;
+}
+
+.toast.success { background: #2e7d32; }
+.toast.error { background: #c62828; }
+
+@keyframes slideIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; transform: translateX(120%); }
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  backdrop-filter: blur(3px);
+}
+
+.modal {
+  background: var(--cream);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  padding: 24px 24px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 { font-size: 1.4rem; color: var(--brown-600); }
+
+.modal-body { padding: 20px 24px; }
+.modal-footer { padding: 0 24px 24px; display: flex; justify-content: flex-end; gap: 8px; }
+
+.form-group { margin-bottom: 16px; }
+
+.form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.925rem;
+  color: var(--text-primary);
+  background: var(--cream);
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.form-control:focus {
+  border-color: var(--brown-300);
+  background: var(--cream);
+  box-shadow: 0 0 0 3px rgba(196, 134, 58, 0.15);
+}
+
+.weekday-picker {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.weekday-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--cream);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.weekday-btn.active {
+  background: var(--brown-300);
+  border-color: var(--brown-300);
+  color: white;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  line-height: 1;
+}
+
+.close-btn:hover { color: var(--text-primary); }
+
+@media (max-width: 640px) {
+  .navbar { padding: 0 12px; }
+  .navbar-brand { font-size: 1.1rem; }
+  .btn { padding: 7px 12px; font-size: 0.8rem; }
+
+  .modal {
+    max-height: 95vh;
+    border-radius: 16px;
+  }
+
+  .modal-overlay {
+    padding: 8px;
+    align-items: flex-end;
+  }
+
+  .modal-header {
+    padding: 16px 16px 0;
+  }
+
+  .modal-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .modal-footer {
+    padding: 0 16px 16px;
+    flex-wrap: wrap;
+  }
+
+  .modal-footer .btn {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+  }
+}

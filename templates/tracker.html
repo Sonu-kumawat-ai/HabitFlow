@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task_set.name }} – Tracker{% endblock %}
+
+{% block body_attrs %}data-task-set-id="{{ task_set._id }}"{% endblock %}
+
+{% block navbar_actions %}
+<button onclick="history.back()" class="btn btn-ghost btn-sm" title="Go back">
+  <i class="fas fa-arrow-left"></i> Back
+</button>
+<a href="{{ url_for('dashboard.task_set_dashboard', task_set_id=task_set._id) }}" class="btn btn-ghost btn-sm">
+  <i class="fas fa-chart-bar"></i> Dashboard
+</a>
+<a href="{{ url_for('tasks.home') }}" class="btn btn-ghost btn-sm">
+  <i class="fas fa-home"></i> Home
+</a>
+<a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-sm">
+  <i class="fas fa-sign-out-alt"></i>
+</a>
+{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tracker.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="tracker-layout">
+  <div class="tracker-header">
+    <div class="tracker-title">
+      <h2>{{ task_set.name }}</h2>
+      <p id="todayInfo" style="font-weight:600;color:var(--brown-500);font-size:0.9rem;"></p>
+      <p style="margin-top:2px;">{{ task_set.tasks|length }} tasks · Click a cell to cycle status (Today only)</p>
+    </div>
+    <div class="quick-actions">
+      <button class="btn btn-secondary btn-sm" onclick="markAllDone()">
+        <i class="fas fa-check-double"></i> All Done
+      </button>
+      <button class="btn btn-secondary btn-sm" onclick="copyYesterday()">
+        <i class="fas fa-copy"></i> Copy Yesterday
+      </button>
+      <button class="btn btn-secondary btn-sm" onclick="undoToday()">
+        <i class="fas fa-undo"></i> Undo
+      </button>
+    </div>
+  </div>
+
+  <div class="table-container" id="tableContainer">
+    <table class="tracker-table" id="trackerTable">
+      <thead>
+        <tr>
+          <th>Date</th>
+          {% for task in task_set.tasks %}
+          {% set task_name = task.name if task is mapping else task %}
+          <th title="{{ task_name }}">
+            <div class="task-header-inner" data-task-header="{{ task_name }}">
+              <span class="task-header-name">{{ task_name[:15] }}{% if task_name|length > 15 %}…{% endif %}</span>
+              <span class="task-streak-badge" data-task-streak="{{ task_name }}" title="Current task streak">
+                <span>🔥</span><span>0</span>
+              </span>
+            </div>
+          </th>
+          {% endfor %}
+          <th class="col-notes"><i class="fas fa-sticky-note"></i> Notes</th>
+          <th class="col-strike"><i class="fas fa-fire"></i> Strike</th>
+        </tr>
+      </thead>
+      <tbody id="trackerBody">
+      </tbody>
+    </table>
+  </div>
+
+  <div class="legend">
+    <span style="font-weight:600;color:var(--text-secondary);font-size:0.78rem;">Status:</span>
+    <span class="legend-item"><span class="legend-dot dot-complete"></span> Completed</span>
+    <span class="legend-item"><span class="legend-dot dot-partial"></span> Partial</span>
+    <span class="legend-item"><span class="legend-dot dot-incomplete"></span> Incomplete</span>
+    <span style="margin-left:auto;color:var(--text-muted);font-size:0.75rem;" id="saveStatus">✓ Auto-saved</span>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/tracker.js') }}"></script>
+{% endblock %}
