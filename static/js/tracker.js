@@ -1,7 +1,13 @@
 const TASK_SET_ID = document.body.dataset.taskSetId;
 let TASK_SET = null;
 let TASKS = [];
-const TODAY = new Date().toISOString().split('T')[0];
+const TODAY = (() => {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+})();
 const STATUSES = ['none', 'completed', 'partial', 'incomplete'];
 const STATUS_ICONS = { none: '', completed: '✅', partial: '🔶', incomplete: '❌' };
 const STATUS_LABELS = { none: '—', completed: 'Done', partial: 'Partial', incomplete: 'Missed' };
@@ -10,6 +16,13 @@ const STRIKE_EMOJIS = { 0: '', 1: '🔥', 3: '⚡', 7: '💫', 14: '🌟', 30: '
 let logs = {};
 let undoStack = [];
 let saveTimeout;
+let remainingFutureDates = [];
+let allTrackerDates = [];
+let futureBatchLoadLocked = false;
+let lastFutureScrollTop = 0;
+let userScrollInteracted = false;
+
+const FUTURE_BATCH_SIZE = 2;
 
 function normalizeTasks(taskSet) {
   return taskSet.tasks.map(t => {
@@ -39,7 +52,10 @@ function initHeaderDate() {
 }
 
 function formatDate(d) {
-  return d.toISOString().split('T')[0];
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function isTaskActiveOnDate(task, dateStr) {
@@ -66,6 +82,7 @@ function isTaskActiveOnDate(task, dateStr) {
 function getDatesInRange() {
   let minDate = null;
   let maxDate = null;
+  const todayDate = new Date(TODAY + 'T00:00:00');
 
   if (TASK_SET.start_date) {
     minDate = new Date(TASK_SET.start_date + 'T00:00:00');
@@ -85,8 +102,12 @@ function getDatesInRange() {
     }
   });
 
-  if (!minDate) minDate = new Date(TODAY + 'T00:00:00');
-  if (!maxDate) maxDate = new Date(TODAY + 'T00:00:00');
+  if (!minDate) minDate = new Date(todayDate);
+  if (!maxDate) maxDate = new Date(todayDate);
+
+  // Keep today present even when all task dates are only in the past or future.
+  if (minDate > todayDate) minDate = new Date(todayDate);
+  if (maxDate < todayDate) maxDate = new Date(todayDate);
 
   const dates = [];
   const cur = new Date(minDate);
@@ -154,94 +175,213 @@ function updateTaskHeaderStreaks(allDates) {
   });
 }
 
-function buildTable() {
-  const tbody = document.getElementById('trackerBody');
-  tbody.innerHTML = '';
-  const allDates = getDatesInRange();
-  updateTaskHeaderStreaks(allDates);
+function createTrackerRow(date, allDates) {
+  const row = document.createElement('tr');
+  const isToday = date === TODAY;
+  const isPast = date < TODAY;
+  row.className = isToday ? 'today-row' : isPast ? 'past-row' : 'future-row';
+  row.dataset.date = date;
 
-  const futureDates = allDates.filter(date => date > TODAY).sort((a, b) => a.localeCompare(b));
-  const pastDates = allDates.filter(date => date < TODAY).sort((a, b) => b.localeCompare(a));
-  const hasToday = allDates.includes(TODAY);
-  const sortedDates = hasToday ? [...futureDates, TODAY, ...pastDates] : [...futureDates, ...pastDates];
-
-  sortedDates.forEach(date => {
-    const row = document.createElement('tr');
-    const isToday = date === TODAY;
-    const isPast = date < TODAY;
-    row.className = isToday ? 'today-row' : isPast ? 'past-row' : 'future-row';
-    row.dataset.date = date;
-
-    const dateObj = new Date(date + 'T00:00:00');
-    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const dateCell = document.createElement('td');
-    dateCell.className = 'date-cell';
-    const pad = n => String(n).padStart(2, '0');
-    const label = `${pad(dateObj.getDate())}/${pad(dateObj.getMonth() + 1)}/${dateObj.getFullYear()}`;
-    dateCell.innerHTML = `
+  const dateObj = new Date(date + 'T00:00:00');
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dateCell = document.createElement('td');
+  dateCell.className = 'date-cell';
+  const pad = n => String(n).padStart(2, '0');
+  const label = `${pad(dateObj.getDate())}/${pad(dateObj.getMonth() + 1)}/${dateObj.getFullYear()}`;
+  dateCell.innerHTML = `
       <div class="date-inner">
         <span class="date-label">${label}</span>
         <span class="date-weekday">${weekdays[dateObj.getDay()]}</span>
         ${isToday ? '<span class="today-badge">TODAY</span>' : ''}
       </div>
     `;
-    row.appendChild(dateCell);
+  row.appendChild(dateCell);
 
-    TASKS.forEach(task => {
-      const td = document.createElement('td');
-      const taskActive = isTaskActiveOnDate(task, date);
+  TASKS.forEach(task => {
+    const td = document.createElement('td');
+    const taskActive = isTaskActiveOnDate(task, date);
 
-      if (!taskActive) {
-        td.className = 'status-cell locked';
-        td.style.background = '#f5f5f5';
-        td.innerHTML = '<span style="color:#ccc;">—</span>';
-        row.appendChild(td);
-        return;
-      }
-
-      td.className = 'status-cell' + (isToday ? '' : ' locked');
-      const logEntry = logs[date] || {};
-      const status = logEntry.statuses ? (logEntry.statuses[task.name] || 'none') : 'none';
-
-      const btn = document.createElement('button');
-      btn.className = `status-btn ${status}`;
-      btn.disabled = !isToday;
-      btn.dataset.task = task.name;
-      btn.dataset.date = date;
-      btn.dataset.status = status;
-      btn.innerHTML = STATUS_ICONS[status] ? `${STATUS_ICONS[status]} <span>${STATUS_LABELS[status]}</span>` : '<span style="color:var(--text-muted)">—</span>';
-
-      if (isToday) {
-        btn.addEventListener('click', () => cycleStatus(btn, date, task.name, allDates));
-      }
-      td.appendChild(btn);
+    if (!taskActive) {
+      td.className = 'status-cell locked';
+      td.style.background = '#f5f5f5';
+      td.innerHTML = '<span style="color:#ccc;">—</span>';
       row.appendChild(td);
-    });
-
-    const noteTd = document.createElement('td');
-    noteTd.className = 'note-cell';
-    const note = (logs[date] || {}).note || '';
-    const noteInput = document.createElement('textarea');
-    noteInput.className = 'note-input';
-    noteInput.rows = 1;
-    noteInput.placeholder = isToday ? 'Add a note...' : '';
-    noteInput.value = note;
-    noteInput.disabled = !isToday;
-    if (isToday) {
-      noteInput.addEventListener('input', () => scheduleSave(date, allDates));
+      return;
     }
-    noteTd.appendChild(noteInput);
-    row.appendChild(noteTd);
 
-    const strikeTd = document.createElement('td');
-    strikeTd.className = 'strike-cell';
-    strikeTd.id = `strike-${date}`;
-    updateStrikeCell(strikeTd, date, allDates);
-    row.appendChild(strikeTd);
+    td.className = 'status-cell' + (isToday ? '' : ' locked');
+    const logEntry = logs[date] || {};
+    const status = logEntry.statuses ? (logEntry.statuses[task.name] || 'none') : 'none';
 
-    tbody.appendChild(row);
+    const btn = document.createElement('button');
+    btn.className = `status-btn ${status}`;
+    btn.disabled = !isToday;
+    btn.dataset.task = task.name;
+    btn.dataset.date = date;
+    btn.dataset.status = status;
+    btn.innerHTML = STATUS_ICONS[status] ? `${STATUS_ICONS[status]} <span>${STATUS_LABELS[status]}</span>` : '<span style="color:var(--text-muted)">—</span>';
+
+    if (isToday) {
+      btn.addEventListener('click', () => cycleStatus(btn, date, task.name, allDates));
+    }
+    td.appendChild(btn);
+    row.appendChild(td);
   });
 
+  const noteTd = document.createElement('td');
+  noteTd.className = 'note-cell';
+  const note = (logs[date] || {}).note || '';
+  const noteInput = document.createElement('textarea');
+  noteInput.className = 'note-input';
+  noteInput.rows = 1;
+  noteInput.placeholder = isToday ? 'Add a note...' : '';
+  noteInput.value = note;
+  noteInput.disabled = !isToday;
+  if (isToday) {
+    noteInput.addEventListener('input', () => scheduleSave(date, allDates));
+  }
+  noteTd.appendChild(noteInput);
+  row.appendChild(noteTd);
+
+  const strikeTd = document.createElement('td');
+  strikeTd.className = 'strike-cell';
+  strikeTd.id = `strike-${date}`;
+  updateStrikeCell(strikeTd, date, allDates);
+  row.appendChild(strikeTd);
+
+  return row;
+}
+
+function loadMoreFutureDates(batchSize = FUTURE_BATCH_SIZE) {
+  const tbody = document.getElementById('trackerBody');
+  if (!tbody || remainingFutureDates.length === 0) return false;
+
+  const batch = remainingFutureDates.splice(-batchSize);
+  if (batch.length === 0) return false;
+
+  const fragment = document.createDocumentFragment();
+  batch.forEach(date => {
+    fragment.appendChild(createTrackerRow(date, allTrackerDates));
+  });
+  tbody.insertBefore(fragment, tbody.firstChild);
+
+  return batch.length > 0;
+}
+
+function unloadFutureDates(batchSize = FUTURE_BATCH_SIZE) {
+  const tbody = document.getElementById('trackerBody');
+  if (!tbody) return { removedAny: false, removedHeight: 0 };
+
+  const removedDates = [];
+  let removedHeight = 0;
+
+  while (removedDates.length < batchSize) {
+    const topRow = tbody.firstElementChild;
+    if (!topRow || !topRow.classList.contains('future-row')) break;
+
+    removedDates.push(topRow.dataset.date);
+    removedHeight += topRow.offsetHeight;
+    tbody.removeChild(topRow);
+  }
+
+  if (removedDates.length > 0) {
+    remainingFutureDates = remainingFutureDates.concat(removedDates);
+    return { removedAny: true, removedHeight };
+  }
+
+  return { removedAny: false, removedHeight: 0 };
+}
+
+function bindFutureLazyLoad() {
+  const container = document.getElementById('tableContainer');
+  if (!container || container.dataset.futureLazyBound === '1') return;
+
+  const tryLoadFutureBatch = () => {
+    if (futureBatchLoadLocked || container.scrollTop > 2 || remainingFutureDates.length === 0) return false;
+
+    futureBatchLoadLocked = true;
+    const loaded = loadMoreFutureDates();
+    if (loaded) {
+      container.scrollTop = 1;
+    }
+    setTimeout(() => {
+      futureBatchLoadLocked = false;
+    }, 120);
+
+    return loaded;
+  };
+
+  const tryUnloadFutureBatch = () => {
+    if (futureBatchLoadLocked) return false;
+    const tbody = document.getElementById('trackerBody');
+    const topRow = tbody ? tbody.firstElementChild : null;
+    const hasLoadedFutureRows = !!topRow && topRow.classList.contains('future-row');
+    if (!hasLoadedFutureRows) return false;
+
+    futureBatchLoadLocked = true;
+    const { removedAny, removedHeight } = unloadFutureDates();
+    if (removedAny) {
+      container.scrollTop = Math.max(0, container.scrollTop - removedHeight);
+    }
+    setTimeout(() => {
+      futureBatchLoadLocked = false;
+    }, 120);
+
+    return removedAny;
+  };
+
+  container.addEventListener('wheel', (event) => {
+    userScrollInteracted = true;
+    if (event.deltaY < 0) {
+      tryLoadFutureBatch();
+    } else if (event.deltaY > 0) {
+      tryUnloadFutureBatch();
+    }
+  }, { passive: true });
+
+  container.addEventListener('scroll', () => {
+    if (!userScrollInteracted) {
+      lastFutureScrollTop = container.scrollTop;
+      return;
+    }
+
+    const currentTop = container.scrollTop;
+    const isScrollingUp = currentTop < lastFutureScrollTop;
+    const isScrollingDown = currentTop > lastFutureScrollTop;
+
+    if (isScrollingUp) {
+      tryLoadFutureBatch();
+    } else if (isScrollingDown) {
+      tryUnloadFutureBatch();
+    }
+
+    lastFutureScrollTop = currentTop;
+  }, { passive: true });
+
+  container.dataset.futureLazyBound = '1';
+}
+
+function buildTable() {
+  const tbody = document.getElementById('trackerBody');
+  tbody.innerHTML = '';
+  const allDates = getDatesInRange();
+  allTrackerDates = allDates;
+  updateTaskHeaderStreaks(allDates);
+
+  // Reverse future order so nearest future date is directly above today.
+  const futureDates = allDates.filter(date => date > TODAY).sort((a, b) => b.localeCompare(a));
+  const pastDates = allDates.filter(date => date < TODAY).sort((a, b) => b.localeCompare(a));
+  const hasToday = allDates.includes(TODAY);
+  const initialDates = hasToday ? [TODAY, ...pastDates] : [...pastDates];
+  remainingFutureDates = [...futureDates];
+  lastFutureScrollTop = 0;
+  userScrollInteracted = false;
+
+  initialDates.forEach(date => {
+    tbody.appendChild(createTrackerRow(date, allDates));
+  });
+
+  bindFutureLazyLoad();
   scrollToToday();
 }
 
@@ -403,14 +543,26 @@ function undoToday() {
 }
 
 function scrollToToday() {
-  setTimeout(() => {
-    const container = document.getElementById('tableContainer');
-    const todayRow = document.querySelector('.today-row');
-    if (container && todayRow) {
-      const targetTop = Math.max(0, todayRow.offsetTop - 2);
-      container.scrollTop = targetTop;
-    }
-  }, 100);
+  const container = document.getElementById('tableContainer');
+  const todayRow = document.querySelector('.today-row');
+  if (!container || !todayRow) return;
+
+  const alignTodayAtTop = () => {
+    const containerTop = container.getBoundingClientRect().top;
+    const rowTop = todayRow.getBoundingClientRect().top;
+    const stickyHead = document.querySelector('#trackerTable thead');
+    const stickyOffset = stickyHead ? stickyHead.getBoundingClientRect().height : 0;
+    const targetTop = container.scrollTop + (rowTop - containerTop) - stickyOffset;
+    container.scrollTop = Math.max(0, targetTop);
+  };
+
+  // Apply alignment more than once to handle late layout shifts.
+  requestAnimationFrame(() => {
+    alignTodayAtTop();
+    requestAnimationFrame(alignTodayAtTop);
+  });
+  setTimeout(alignTodayAtTop, 120);
+  setTimeout(alignTodayAtTop, 350);
 }
 
 async function loadLogs() {
