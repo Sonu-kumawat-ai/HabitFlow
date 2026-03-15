@@ -16,7 +16,7 @@
 
 {% block extra_head %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/overall_dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/overall_dashboard.css', v='20260315-1') }}">
 {% endblock %}
 
 {% block content %}
@@ -38,5 +38,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/overall_dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/overall_dashboard.js', v='20260315-1') }}"></script>
 {% endblock %}

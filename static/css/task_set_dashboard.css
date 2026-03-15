@@ -146,7 +146,27 @@
   height: 240px;
 }
 
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.history-table {
+  min-width: 680px;
+}
+
+.history-table th,
+.history-table td {
+  white-space: nowrap;
+}
+
+.history-table td:last-child {
+  min-width: 180px;
+  white-space: normal;
+}
+
 .heatmap-container { overflow-x: auto; }
+.heatmap-root { display: flex; min-width: max-content; }
 .heatmap-weeks { display: flex; gap: 3px; }
 .heatmap-col { display: flex; flex-direction: column; gap: 3px; }
 .heatmap-day { width: 13px; height: 13px; border-radius: 2px; background: #eee; cursor: pointer; }
@@ -198,19 +218,19 @@
     text-align: center;
   }
 
-  .task-stats-table thead {
+  .task-stats-table:not(.history-table) thead {
     display: none;
   }
 
-  .task-stats-table,
-  .task-stats-table tbody,
-  .task-stats-table tr,
-  .task-stats-table td {
+  .task-stats-table:not(.history-table),
+  .task-stats-table:not(.history-table) tbody,
+  .task-stats-table:not(.history-table) tr,
+  .task-stats-table:not(.history-table) td {
     display: block;
     width: 100%;
   }
 
-  .task-stats-table tr.mobile-stat-row {
+  .task-stats-table:not(.history-table) tr.mobile-stat-row {
     border: 1px solid var(--border);
     border-radius: 12px;
     background: #fffaf0;
@@ -218,12 +238,12 @@
     margin-bottom: 10px;
   }
 
-  .task-stats-table td {
+  .task-stats-table:not(.history-table) td {
     border-bottom: 0;
     padding: 6px 0;
   }
 
-  .task-stats-table td::before {
+  .task-stats-table:not(.history-table) td::before {
     content: attr(data-label);
     display: block;
     font-size: 0.68rem;
@@ -234,7 +254,7 @@
     margin-bottom: 3px;
   }
 
-  .task-stats-table td.completion-cell > div {
+  .task-stats-table:not(.history-table) td.completion-cell > div {
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;

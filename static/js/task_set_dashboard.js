@@ -7,6 +7,13 @@ function formatIndianDateFromISO(dateStr) {
   return `${d}/${m}/${y}`;
 }
 
+function formatISODateLocal(dateObj) {
+  const yyyy = dateObj.getFullYear();
+  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const dd = String(dateObj.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 function pctChipClass(value) {
   if (value >= 75) return 'chip-good';
   if (value >= 40) return 'chip-warn';
@@ -149,8 +156,8 @@ async function loadDashboard() {
     <div class="section-card">
       <h3><i class="fas fa-history"></i> 8. History</h3>
       <div class="section-note">Recent Log (Last 10 Days)</div>
-      <div style="overflow-x:auto;">
-        <table class="task-stats-table">
+      <div class="table-scroll">
+        <table class="task-stats-table history-table">
           <thead>
             <tr>
               <th>Date</th>
@@ -250,7 +257,7 @@ function buildHeatmap(heatmapData) {
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  let html = '<div style="display:flex;">';
+  let html = '<div class="heatmap-root">';
   html += '<div class="heatmap-side-labels">';
   ['', 'M', '', 'W', '', 'F', ''].forEach(l => {
     html += `<div class="heatmap-day-label">${l}</div>`;
@@ -281,7 +288,7 @@ function buildHeatmap(heatmapData) {
         html += '<div class="heatmap-day" data-level="0"></div>';
         return;
       }
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = formatISODateLocal(date);
       const pct = heatmapData[dateStr] || 0;
       const level = pct === 0 ? 0 : pct <= 25 ? 1 : pct <= 50 ? 2 : pct <= 75 ? 3 : 4;
       html += `<div class="heatmap-day" data-level="${level}" data-date="${dateStr}" data-pct="${pct}"></div>`;
@@ -295,18 +302,32 @@ function buildHeatmap(heatmapData) {
   container.innerHTML = html;
 
   container.querySelectorAll('.heatmap-day[data-date]').forEach(el => {
-    el.addEventListener('mouseenter', () => {
+    const showTip = (x, y) => {
       const pct = el.dataset.pct;
       tooltip.style.display = 'block';
       tooltip.textContent = `${formatIndianDateFromISO(el.dataset.date)}: ${pct}% completed`;
+      tooltip.style.left = (x + 12) + 'px';
+      tooltip.style.top = (y - 28) + 'px';
+    };
+
+    el.addEventListener('mouseenter', e => {
+      showTip(e.clientX, e.clientY);
     });
     el.addEventListener('mousemove', e => {
-      tooltip.style.left = (e.clientX + 12) + 'px';
-      tooltip.style.top = (e.clientY - 28) + 'px';
+      showTip(e.clientX, e.clientY);
     });
     el.addEventListener('mouseleave', () => {
       tooltip.style.display = 'none';
     });
+
+    el.addEventListener('touchstart', e => {
+      const touch = e.touches && e.touches[0] ? e.touches[0] : null;
+      if (!touch) return;
+      showTip(touch.clientX, touch.clientY);
+    }, { passive: true });
+    el.addEventListener('touchend', () => {
+      tooltip.style.display = 'none';
+    }, { passive: true });
   });
 }
 

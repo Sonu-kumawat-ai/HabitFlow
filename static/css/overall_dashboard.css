@@ -184,6 +184,7 @@
 .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--brown-300), var(--brown-200)); border-radius: 3px; }
 
 .heatmap-container { overflow-x: auto; }
+.heatmap-root { display: flex; min-width: max-content; }
 .heatmap-weeks { display: flex; gap: 3px; }
 .heatmap-col { display: flex; flex-direction: column; gap: 3px; }
 .heatmap-day { width: 13px; height: 13px; border-radius: 2px; background: #eee; cursor: pointer; }
