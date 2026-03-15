@@ -479,8 +479,15 @@ async function saveLog(date, allDates) {
   }
 }
 
-function markAllDone() {
-  if (!confirm('Mark all tasks for today as Completed?')) return;
+async function markAllDone() {
+  const shouldMarkAll = await showConfirmModal({
+    title: 'Mark All Done',
+    message: 'Mark all tasks for today as completed?',
+    confirmText: 'Mark Done',
+    cancelText: 'Cancel',
+  });
+  if (!shouldMarkAll) return;
+
   const allDates = getDatesInRange();
   const prev = JSON.parse(JSON.stringify(logs[TODAY] || {}));
   undoStack.push({ date: TODAY, prev });

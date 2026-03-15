@@ -231,7 +231,15 @@ async function editTaskSet(id) {
 }
 
 async function deleteTaskSet(id, btn) {
-  if (!confirm('Delete this task set and all its data?')) return;
+  const shouldDelete = await showConfirmModal({
+    title: 'Delete Task Set',
+    message: 'Delete this task set and all its data? This cannot be undone.',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    danger: true,
+  });
+  if (!shouldDelete) return;
+
   const res = await apiCall(`/api/task-sets/${id}`, 'DELETE');
   if (res.success) {
     showToast('Task set deleted', 'success');

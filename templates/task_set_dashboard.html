@@ -5,6 +5,9 @@
 {% block body_attrs %}data-task-set-id="{{ task_set._id }}"{% endblock %}
 
 {% block navbar_actions %}
+<button onclick="history.back()" class="btn btn-ghost btn-sm" title="Go back">
+  <i class="fas fa-arrow-left"></i> Back
+</button>
 <a href="{{ url_for('tasks.tracker', task_set_id=task_set._id) }}" class="btn btn-ghost btn-sm">
   <i class="fas fa-table"></i> Tracker
 </a>
