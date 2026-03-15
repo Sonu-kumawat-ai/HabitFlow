@@ -3,7 +3,8 @@ body { overflow: hidden; }
 .tracker-layout {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 60px);
+  height: calc(100dvh - 60px);
+  min-height: 0;
 }
 
 .tracker-header {
@@ -35,8 +36,12 @@ body { overflow: hidden; }
 
 .table-container {
   flex: 1;
+  min-height: 0;
   overflow: auto;
   position: relative;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior: contain;
 }
 
 .tracker-table {
@@ -253,6 +258,15 @@ body { overflow: hidden; }
 .col-strike { background: var(--brown-700) !important; }
 
 @media (max-width: 640px) {
+  body { overflow: auto; }
+  .tracker-layout {
+    height: calc(100dvh - 60px);
+    min-height: calc(100dvh - 60px);
+  }
+  .table-container {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
   .tracker-header { padding: 8px; }
   .quick-actions .btn { padding: 5px 8px; font-size: 0.75rem; }
   .tracker-title h2 { font-size: 1rem; }

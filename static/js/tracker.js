@@ -20,7 +20,7 @@ let remainingFutureDates = [];
 let allTrackerDates = [];
 let futureBatchLoadLocked = false;
 let lastFutureScrollTop = 0;
-let userScrollInteracted = false;
+let touchStartY = null;
 
 const FUTURE_BATCH_SIZE = 2;
 
@@ -331,7 +331,6 @@ function bindFutureLazyLoad() {
   };
 
   container.addEventListener('wheel', (event) => {
-    userScrollInteracted = true;
     if (event.deltaY < 0) {
       tryLoadFutureBatch();
     } else if (event.deltaY > 0) {
@@ -339,12 +338,28 @@ function bindFutureLazyLoad() {
     }
   }, { passive: true });
 
-  container.addEventListener('scroll', () => {
-    if (!userScrollInteracted) {
-      lastFutureScrollTop = container.scrollTop;
-      return;
-    }
+  container.addEventListener('touchstart', (event) => {
+    const touch = event.touches && event.touches[0] ? event.touches[0] : null;
+    touchStartY = touch ? touch.clientY : null;
+  }, { passive: true });
 
+  container.addEventListener('touchmove', (event) => {
+    const touch = event.touches && event.touches[0] ? event.touches[0] : null;
+    if (!touch || touchStartY === null) return;
+
+    const deltaY = touch.clientY - touchStartY;
+    if (deltaY > 4) {
+      tryLoadFutureBatch();
+    } else if (deltaY < -4) {
+      tryUnloadFutureBatch();
+    }
+  }, { passive: true });
+
+  container.addEventListener('touchend', () => {
+    touchStartY = null;
+  }, { passive: true });
+
+  container.addEventListener('scroll', () => {
     const currentTop = container.scrollTop;
     const isScrollingUp = currentTop < lastFutureScrollTop;
     const isScrollingDown = currentTop > lastFutureScrollTop;
@@ -375,7 +390,7 @@ function buildTable() {
   const initialDates = hasToday ? [TODAY, ...pastDates] : [...pastDates];
   remainingFutureDates = [...futureDates];
   lastFutureScrollTop = 0;
-  userScrollInteracted = false;
+  touchStartY = null;
 
   initialDates.forEach(date => {
     tbody.appendChild(createTrackerRow(date, allDates));

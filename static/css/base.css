@@ -59,12 +59,13 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 
 .navbar-brand span { color: var(--brown-200); }
 
-.navbar-actions { display: flex; gap: 8px; align-items: center; }
+.navbar-actions { display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; }
 
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
   padding: 8px 16px;
   border-radius: var(--radius);
   border: none;
@@ -270,8 +271,25 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; }
 .close-btn:hover { color: var(--text-primary); }
 
 @media (max-width: 640px) {
-  .navbar { padding: 0 12px; }
+  .navbar {
+    padding: 0 8px;
+    gap: 8px;
+  }
   .navbar-brand { font-size: 1.1rem; }
+  .navbar-actions {
+    gap: 4px;
+    max-width: 70vw;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .navbar-actions::-webkit-scrollbar { display: none; }
+  .navbar-actions .btn {
+    flex: 0 0 auto;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
   .btn { padding: 7px 12px; font-size: 0.8rem; }
 
   .modal {
