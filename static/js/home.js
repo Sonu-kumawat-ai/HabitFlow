@@ -1,6 +1,10 @@
 let currentEditId = null;
 const TODAY = new Date().toISOString().split('T')[0];
 
+function navigateToTracker(taskSetId) {
+  window.location.href = `/tracker/${taskSetId}`;
+}
+
 function openCreateModal() {
   currentEditId = null;
   document.querySelector('#createModal .modal-header h2').innerHTML = '<i class="fas fa-plus-circle" style="color:var(--brown-300);margin-right:8px;"></i>New Task Set';

@@ -44,13 +44,14 @@ async function loadDashboard() {
         <div class="metric-card">
           <div class="metric-label">Productivity Score</div>
           <div class="metric-value">${d.productivity_score}%</div>
-          <div class="metric-sub">completed tasks / scheduled tasks</div>
+          <div class="metric-sub">progress points / scheduled tasks (partial = 0.5)</div>
         </div>
       </div>
     </div>
 
     <div class="section-card">
       <h3><i class="fas fa-calendar-day"></i> 2. Today's Progress</h3>
+      <div class="section-note">Progress % uses partial as 0.5. Completed count includes completed + partial.</div>
       <div class="metric-grid-4">
         <div class="metric-card"><div class="metric-label">Today Progress %</div><div class="metric-value">${d.today_progress_pct}%</div></div>
         <div class="metric-card"><div class="metric-label">Total Tasks Today</div><div class="metric-value">${d.today_total_tasks}</div></div>
@@ -161,7 +162,6 @@ async function loadDashboard() {
           <thead>
             <tr>
               <th>Date</th>
-              <th>Productivity %</th>
               ${d.tasks.map(t => `<th>${t.slice(0,10)}${t.length > 10 ? '...' : ''}</th>`).join('')}
               <th>Strike</th>
               <th>Note</th>
@@ -171,13 +171,12 @@ async function loadDashboard() {
             ${(d.recent_logs || []).map(log => `
               <tr>
                 <td>${formatIndianDateFromISO(log.date)}</td>
-                <td>${log.productivity_pct}%</td>
                 ${d.tasks.map(t => {
                   const st = (log.statuses || {})[t] || 'none';
                   const icon = st === 'completed' ? '✅' : st === 'partial' ? '🔶' : st === 'incomplete' ? '❌' : '—';
                   return `<td style="text-align:center;">${icon}</td>`;
                 }).join('')}
-                <td style="text-align:center;">${log.strike === 1 ? '🔥' : '—'}</td>
+                <td style="text-align:center;">${log.strike_count > 0 ? log.strike_count + ' 🔥' : '—'}</td>
                 <td>${log.note || ''}</td>
               </tr>
             `).join('')}

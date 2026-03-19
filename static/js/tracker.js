@@ -130,14 +130,43 @@ function getStrikeEmoji(count) {
   return '';
 }
 
+function getOverallStrikeOutcome(date) {
+  const activeTasks = TASKS.filter(t => isTaskActiveOnDate(t, date));
+  if (activeTasks.length === 0) return 'hold';
+
+  const statuses = (logs[date] && logs[date].statuses) ? logs[date].statuses : {};
+  const hasMissed = activeTasks.some(t => statuses[t.name] === 'incomplete');
+  if (hasMissed) return 'reset';
+
+  const allDone = activeTasks.every(t => statuses[t.name] === 'completed');
+  return allDone ? 'increment' : 'hold';
+}
+
+function areAllActiveTasksMarked(date) {
+  const activeTasks = TASKS.filter(t => isTaskActiveOnDate(t, date));
+  if (activeTasks.length === 0) return false;
+
+  const statuses = (logs[date] && logs[date].statuses) ? logs[date].statuses : {};
+  return activeTasks.every(t => {
+    const status = statuses[t.name] || 'none';
+    return status !== 'none';
+  });
+}
+
 function getRunningStrike(date, allDates) {
+  if (date > TODAY) return 0;
+
   const idx = allDates.indexOf(date);
   if (idx < 0) return 0;
+
   let streak = 0;
   for (let i = idx; i >= 0; i--) {
-    const d = allDates[i];
-    if (logs[d] && logs[d].strike === 1) streak++;
-    else break;
+    const outcome = getOverallStrikeOutcome(allDates[i]);
+    if (outcome === 'increment') {
+      streak++;
+    } else if (outcome === 'reset') {
+      break;
+    }
   }
   return streak;
 }
@@ -153,7 +182,7 @@ function getTaskRunningStreak(taskName, allDates) {
     const status = (logs[d] && logs[d].statuses) ? (logs[d].statuses[taskName] || 'none') : 'none';
     if (status === 'completed') {
       streak++;
-    } else {
+    } else if (status === 'incomplete') {
       break;
     }
   }
@@ -173,6 +202,20 @@ function updateTaskHeaderStreaks(allDates) {
     }
     badge.style.opacity = streak > 0 ? '1' : '0.8';
   });
+}
+
+function updateOverallHeaderStrike(allDates) {
+  const badge = document.getElementById('overallStrikeBadge');
+  if (!badge) return;
+
+  const streak = getRunningStrike(TODAY, allDates);
+  const icon = getStrikeEmoji(streak) || '🔥';
+  const iconEl = badge.querySelector('span:first-child');
+  const countEl = badge.querySelector('span:last-child');
+
+  if (iconEl) iconEl.textContent = icon;
+  if (countEl) countEl.textContent = String(streak);
+  badge.style.opacity = streak > 0 ? '1' : '0.8';
 }
 
 function createTrackerRow(date, allDates) {
@@ -382,6 +425,7 @@ function buildTable() {
   const allDates = getDatesInRange();
   allTrackerDates = allDates;
   updateTaskHeaderStreaks(allDates);
+  updateOverallHeaderStrike(allDates);
 
   // Reverse future order so nearest future date is directly above today.
   const futureDates = allDates.filter(date => date > TODAY).sort((a, b) => b.localeCompare(a));
@@ -401,6 +445,11 @@ function buildTable() {
 }
 
 function updateStrikeCell(td, date, allDates) {
+  if (!areAllActiveTasksMarked(date)) {
+    td.innerHTML = '<span class="strike-count" style="color:var(--text-muted);">—</span>';
+    return;
+  }
+
   const streak = getRunningStrike(date, allDates);
   const emoji = getStrikeEmoji(streak);
   td.innerHTML = emoji
@@ -444,6 +493,7 @@ function checkAllComplete(date, allDates) {
   if (strikeTd) updateStrikeCell(strikeTd, date, allDates);
 
   updateTaskHeaderStreaks(allDates);
+  updateOverallHeaderStrike(allDates);
 }
 
 function scheduleSave(date, allDates) {

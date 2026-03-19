@@ -20,7 +20,7 @@
 {% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/tracker.css', v='20260315-2') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tracker.css', v='20260319-3') }}">
 {% endblock %}
 
 {% block content %}
@@ -61,7 +61,14 @@
           </th>
           {% endfor %}
           <th class="col-notes"><i class="fas fa-sticky-note"></i> Notes</th>
-          <th class="col-strike"><i class="fas fa-fire"></i> Strike</th>
+          <th class="col-strike">
+            <div class="strike-header-inner">
+              <span><i class="fas fa-fire"></i> Strike</span>
+              <span class="task-streak-badge strike-streak-badge" id="overallStrikeBadge" title="Current overall streak">
+                <span>🔥</span><span>0</span>
+              </span>
+            </div>
+          </th>
         </tr>
       </thead>
       <tbody id="trackerBody">
@@ -80,5 +87,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/tracker.js', v='20260315-9') }}"></script>
+<script src="{{ url_for('static', filename='js/tracker.js', v='20260319-10') }}"></script>
 {% endblock %}

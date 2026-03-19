@@ -83,6 +83,37 @@ def _compute_day_counts(task_set, log_by_date, day):
     return scheduled, completed
 
 
+def _status_progress_points(status):
+    if status == 'completed':
+        return 1.0
+    if status == 'partial':
+        return 0.5
+    return 0.0
+
+
+def _compute_day_progress(task_set, log_by_date, day):
+    iso = day.isoformat()
+    log = log_by_date.get(iso, {})
+    statuses = log.get('statuses', {}) if isinstance(log, dict) else {}
+
+    scheduled = 0
+    progress_points = 0.0
+    done_like = 0
+
+    for task in task_set.get('tasks', []):
+        task_label = _task_name(task)
+        if not task_label:
+            continue
+        if _is_task_scheduled_on(task, task_set, day):
+            scheduled += 1
+            status = statuses.get(task_label, 'none')
+            progress_points += _status_progress_points(status)
+            if status in ('completed', 'partial'):
+                done_like += 1
+
+    return scheduled, progress_points, done_like
+
+
 def _task_set_period_start(task_set, fallback_day):
     starts = [_task_start_date(t, task_set) for t in task_set.get('tasks', [])]
     starts = [s for s in starts if s]
@@ -182,6 +213,21 @@ def _streak_from_days(task_set, log_by_date, start_day, end_day):
     return current_streak, max_streak
 
 
+def _get_strike_count_up_to(task_set, log_by_date, up_to_day):
+    strike_count = 0
+    start_day = _task_set_period_start(task_set, up_to_day)
+    d = start_day
+    while d <= up_to_day:
+        iso = d.isoformat()
+        log = log_by_date.get(iso, {})
+        if log.get('strike') == 1:
+            strike_count += 1
+        else:
+            strike_count = 0
+        d += timedelta(days=1)
+    return strike_count
+
+
 @dashboard_bp.route('/dashboard')
 @login_required
 def overall_dashboard():
@@ -214,10 +260,11 @@ def get_overall_dashboard_data():
     all_future_active_days = set()
     best_day_scores = {i: [] for i in range(7)}
 
+    total_progress_today = 0.0
     total_completed_today = 0
     total_tasks_today = 0
     global_scheduled = 0
-    global_completed = 0
+    global_progress = 0.0
 
     task_completion_rank = []
 
@@ -254,14 +301,15 @@ def get_overall_dashboard_data():
                 ts_scheduled += scheduled
                 ts_completed += completed
                 global_scheduled += scheduled
-                global_completed += completed
+                _, progress_points, _ = _compute_day_progress(ts, log_by_date, d)
+                global_progress += progress_points
 
-                day_pct = round((completed / scheduled) * 100, 1)
+                day_pct = round((progress_points / scheduled) * 100, 1)
                 day_iso = d.isoformat()
                 ts_heatmap[day_iso] = day_pct
                 day_bucket = all_daily_totals.setdefault(day_iso, {'scheduled': 0, 'completed': 0})
                 day_bucket['scheduled'] += scheduled
-                day_bucket['completed'] += completed
+                day_bucket['completed'] += progress_points
                 best_day_scores[d.weekday()].append(day_pct)
 
                 if completed == scheduled:
@@ -276,7 +324,15 @@ def get_overall_dashboard_data():
                     all_future_active_days.add(d.isoformat())
                 d += timedelta(days=1)
 
-        completion_pct = round((ts_completed / ts_scheduled * 100) if ts_scheduled > 0 else 0, 1)
+        ts_progress_points = 0.0
+        d = start_day
+        while d <= active_end:
+            scheduled, progress_points, _ = _compute_day_progress(ts, log_by_date, d)
+            if scheduled > 0:
+                ts_progress_points += progress_points
+            d += timedelta(days=1)
+
+        completion_pct = round((ts_progress_points / ts_scheduled * 100) if ts_scheduled > 0 else 0, 1)
         ts_total_days_in_period = 0
         d = start_day
         while d <= end_day:
@@ -290,8 +346,9 @@ def get_overall_dashboard_data():
         ts_progress_pct_schedule = round((ts_completed_pct_schedule + ts_missed_pct_schedule), 1)
         current_streak, max_streak = _streak_from_days(ts, log_by_date, start_day, today)
 
-        today_scheduled, today_completed = _compute_day_counts(ts, log_by_date, today)
-        total_completed_today += today_completed
+        today_scheduled, today_progress_points, today_done_like = _compute_day_progress(ts, log_by_date, today)
+        total_progress_today += today_progress_points
+        total_completed_today += today_done_like
         total_tasks_today += today_scheduled
 
         if task_names:
@@ -324,7 +381,7 @@ def get_overall_dashboard_data():
             'progress_pct_schedule': ts_progress_pct_schedule,
             'current_streak': current_streak,
             'max_streak': max_streak,
-            'today_completed_tasks': today_completed,
+            'today_completed_tasks': today_done_like,
             'today_total_tasks': today_scheduled,
         })
 
@@ -337,7 +394,7 @@ def get_overall_dashboard_data():
     current_overall_streak = max((ts['current_streak'] for ts in summaries), default=0)
     best_overall_streak = max((ts['max_streak'] for ts in summaries), default=0)
 
-    productivity_score = round((global_completed / global_scheduled * 100), 1) if global_scheduled else 0
+    productivity_score = round((global_progress / global_scheduled * 100), 1) if global_scheduled else 0
 
     weekday_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     weekday_avg = {
@@ -359,9 +416,10 @@ def get_overall_dashboard_data():
             scheduled, completed = _compute_day_counts(ts, ts_log_maps.get(ts_id, {}), d)
             if scheduled > 0:
                 day_iso = d.isoformat()
+                _, progress_points, _ = _compute_day_progress(ts, ts_log_maps.get(ts_id, {}), d)
                 bucket = combined_schedule_by_day.setdefault(day_iso, {'scheduled': 0, 'completed': 0})
                 bucket['scheduled'] += scheduled
-                bucket['completed'] += completed
+                bucket['completed'] += progress_points
             d += timedelta(days=1)
 
     total_days_in_period = len(combined_schedule_by_day)
@@ -376,16 +434,9 @@ def get_overall_dashboard_data():
         combined_completed = 0
         for ts in task_sets:
             ts_id = str(ts['_id'])
-            day_log = ts_log_maps.get(ts_id, {}).get(day.isoformat(), {})
-            statuses = day_log.get('statuses', {})
-            for task in ts.get('tasks', []):
-                label = _task_name(task)
-                if not label:
-                    continue
-                if _is_task_scheduled_on(task, ts, day):
-                    combined_scheduled += 1
-                    if statuses.get(label) == 'completed':
-                        combined_completed += 1
+            scheduled, progress_points, _ = _compute_day_progress(ts, ts_log_maps.get(ts_id, {}), day)
+            combined_scheduled += scheduled
+            combined_completed += progress_points
         pct = round((combined_completed / combined_scheduled) * 100, 1) if combined_scheduled else 0
         weekly_productivity.append({'label': day.strftime('%a'), 'productivity_pct': pct, 'date': day.isoformat()})
 
@@ -399,7 +450,7 @@ def get_overall_dashboard_data():
         'current_overall_streak': current_overall_streak,
         'best_overall_streak': best_overall_streak,
         'productivity_score': productivity_score,
-        'today_progress_pct': round((total_completed_today / total_tasks_today * 100), 1) if total_tasks_today else 0,
+        'today_progress_pct': round((total_progress_today / total_tasks_today * 100), 1) if total_tasks_today else 0,
         'total_tasks_today': total_tasks_today,
         'completed_tasks_today': total_completed_today,
         'remaining_tasks_today': max(total_tasks_today - total_completed_today, 0),
@@ -444,6 +495,7 @@ def get_task_set_dashboard_data(task_set_id):
         task_obj = next((x for x in ts.get('tasks', []) if _task_name(x) == t), None)
         completed = 0
         partial = 0
+        progress_points = 0.0
         total = 0
         streak = 0
         max_streak = 0
@@ -461,12 +513,14 @@ def get_task_set_dashboard_data(task_set_id):
 
                     if status == 'completed':
                         completed += 1
+                        progress_points += 1.0
                         streak += 1
                         max_streak = max(max_streak, streak)
                         missed_streak = 0
                     else:
                         if status == 'partial':
                             partial += 1
+                            progress_points += 0.5
                         if is_missed:
                             missed_days += 1
                             missed_streak += 1
@@ -476,7 +530,7 @@ def get_task_set_dashboard_data(task_set_id):
                         streak = 0
             d += timedelta(days=1)
 
-        completed_pct = round((completed / total * 100) if total > 0 else 0, 1)
+        completed_pct = round((progress_points / total * 100) if total > 0 else 0, 1)
         missed_pct = round((missed_days / total * 100) if total > 0 else 0, 1)
         progress_pct = round((completed_pct + missed_pct), 1)
 
@@ -497,7 +551,7 @@ def get_task_set_dashboard_data(task_set_id):
     total_days_past = 0
     strike_days = 0
     total_scheduled = 0
-    total_completed = 0
+    total_progress_points = 0.0
     heatmap = {}
 
     weekday_scores = {i: [] for i in range(7)}
@@ -505,11 +559,12 @@ def get_task_set_dashboard_data(task_set_id):
     d = start_day
     while d <= active_end:
         scheduled, completed = _compute_day_counts(ts, log_by_date, d)
+        _, progress_points, _ = _compute_day_progress(ts, log_by_date, d)
         if scheduled > 0:
             total_days_past += 1
             total_scheduled += scheduled
-            total_completed += completed
-            day_pct = round((completed / scheduled) * 100, 1)
+            total_progress_points += progress_points
+            day_pct = round((progress_points / scheduled) * 100, 1)
             heatmap[d.isoformat()] = day_pct
             weekday_scores[d.weekday()].append(day_pct)
             if completed == scheduled:
@@ -527,10 +582,10 @@ def get_task_set_dashboard_data(task_set_id):
     remaining_active_days = max(total_days_in_period - total_days_completed, 0)
     total_days_completed_pct = round((total_days_completed / total_days_in_period * 100), 1) if total_days_in_period else 0
 
-    overall_pct = round((total_completed / total_scheduled * 100), 1) if total_scheduled else 0
+    overall_pct = round((total_progress_points / total_scheduled * 100), 1) if total_scheduled else 0
     current_overall_streak, max_overall_streak = _streak_from_days(ts, log_by_date, start_day, today)
 
-    today_scheduled, today_completed = _compute_day_counts(ts, log_by_date, today)
+    today_scheduled, today_progress_points, today_done_like = _compute_day_progress(ts, log_by_date, today)
 
     most_consistent_task = max(task_stats.items(), key=lambda x: x[1]['completion_pct'])[0] if task_stats else '-'
     most_missed_task = min(task_stats.items(), key=lambda x: x[1]['completion_pct'])[0] if task_stats else '-'
@@ -539,16 +594,15 @@ def get_task_set_dashboard_data(task_set_id):
     period_end = end_day.isoformat()
 
     recent_logs = sorted(logs, key=lambda x: x['date'], reverse=True)[:10]
-    recent_logs = sorted(recent_logs, key=lambda x: x['date'])
 
     today_total_tasks = today_scheduled
-    today_progress_pct = round((today_completed / today_total_tasks * 100), 1) if today_total_tasks else 0
+    today_progress_pct = round((today_progress_points / today_total_tasks * 100), 1) if today_total_tasks else 0
 
     weekly_productivity = []
     for i in range(6, -1, -1):
         day = today - timedelta(days=i)
-        scheduled, completed = _compute_day_counts(ts, log_by_date, day)
-        pct = round((completed / scheduled) * 100, 1) if scheduled else 0
+        scheduled, progress_points, _ = _compute_day_progress(ts, log_by_date, day)
+        pct = round((progress_points / scheduled) * 100, 1) if scheduled else 0
         weekly_productivity.append({'label': day.strftime('%a'), 'productivity_pct': pct, 'date': day.isoformat()})
 
     weekday_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -569,8 +623,8 @@ def get_task_set_dashboard_data(task_set_id):
         'productivity_score': overall_pct,
         'today_progress_pct': today_progress_pct,
         'today_total_tasks': today_total_tasks,
-        'today_completed_tasks': today_completed,
-        'today_remaining_tasks': max(today_total_tasks - today_completed, 0),
+        'today_completed_tasks': today_done_like,
+        'today_remaining_tasks': max(today_total_tasks - today_done_like, 0),
         'most_consistent_task': most_consistent_task,
         'most_missed_task': most_missed_task,
         'period_start': period_start,
@@ -586,20 +640,9 @@ def get_task_set_dashboard_data(task_set_id):
             {
                 'date': l.get('date'),
                 'statuses': l.get('statuses', {}),
+                'strike_count': _get_strike_count_up_to(ts, log_by_date, _parse_iso_date(l.get('date'))),
                 'strike': l.get('strike', 0),
                 'note': l.get('note', ''),
-                'productivity_pct': round(
-                    (
-                        sum(
-                            1 if l.get('statuses', {}).get(t) == 'completed' else 0
-                            for t in task_names
-                        )
-                        / len(task_names)
-                        * 100
-                    )
-                    if task_names else 0,
-                    1,
-                ),
             }
             for l in recent_logs
         ],

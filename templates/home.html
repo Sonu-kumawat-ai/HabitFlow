@@ -33,7 +33,7 @@
     {% if task_sets %}
     <div class="task-sets-grid" id="taskSetsGrid">
       {% for ts in task_sets %}
-      <div class="task-set-card">
+      <div class="task-set-card" onclick="navigateToTracker('{{ ts._id }}')">
         <div class="card-accent"></div>
         <div class="card-body">
           <div class="card-title">{{ ts.name }}</div>
@@ -57,16 +57,16 @@
             {% endif %}
           </div>
           <div class="card-actions">
-            <button class="btn btn-secondary btn-sm" onclick="editTaskSet('{{ ts._id }}')" title="Edit">
+            <button class="btn btn-secondary btn-sm" onclick="editTaskSet('{{ ts._id }}'); event.stopPropagation();" title="Edit">
               <i class="fas fa-edit"></i>
             </button>
-            <a href="{{ url_for('dashboard.task_set_dashboard', task_set_id=ts._id) }}" class="btn btn-secondary btn-sm">
+            <a href="{{ url_for('dashboard.task_set_dashboard', task_set_id=ts._id) }}" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();">
               <i class="fas fa-chart-bar"></i> Stats
             </a>
-            <a href="{{ url_for('tasks.tracker', task_set_id=ts._id) }}" class="btn btn-primary btn-sm">
+            <a href="{{ url_for('tasks.tracker', task_set_id=ts._id) }}" class="btn btn-primary btn-sm" onclick="event.stopPropagation();">
               <i class="fas fa-check-square"></i> Track
             </a>
-            <button class="btn btn-danger btn-sm" onclick="deleteTaskSet('{{ ts._id }}', this)">
+            <button class="btn btn-danger btn-sm" onclick="deleteTaskSet('{{ ts._id }}', this); event.stopPropagation();">
               <i class="fas fa-trash"></i>
             </button>
           </div>

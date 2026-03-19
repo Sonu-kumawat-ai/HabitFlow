@@ -3,7 +3,6 @@ from datetime import date, datetime, timedelta
 from bson.objectid import ObjectId
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
-
 from modules.extensions import mongo
 
 tasks_bp = Blueprint('tasks', __name__)

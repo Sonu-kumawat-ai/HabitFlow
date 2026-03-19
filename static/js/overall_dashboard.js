@@ -58,6 +58,7 @@ async function loadDashboard() {
 
     <div class="section-card">
       <h3><i class="fas fa-calendar-day"></i> 2. Today's Overall Progress</h3>
+      <div class="section-note">Progress % uses partial as 0.5. Completed count includes completed + partial.</div>
       <div class="metric-grid-4">
         <div class="metric-card"><div class="metric-label">Today Progress %</div><div class="metric-value">${data.today_progress_pct}%</div></div>
         <div class="metric-card"><div class="metric-label">Total Tasks Today</div><div class="metric-value">${data.total_tasks_today}</div></div>
